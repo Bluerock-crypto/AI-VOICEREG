@@ -115,7 +115,7 @@
             const btn = document.querySelector('.btn-scan');
             btn.disabled = true; btn.innerText = "ANALYZING...";
             try {
-                const res = await fetch('http://127.0.0.1:8001/api/voice-detection', {
+                const res = await fetch('/api/voice-detection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-api-key': 'sk_test_123456789' },
                     body: JSON.stringify({ 
@@ -136,4 +136,5 @@
         }
     </script>
 </body>
+
 </html>
