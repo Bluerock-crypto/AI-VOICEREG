@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI-VoiceReg | UpsideX Vibrant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            background: linear-gradient(135deg, #050510 0%, #0a0f2e 100%); 
+            color: white; display: flex; align-items: center; justify-content: center; 
+            min-height: 100vh; font-family: 'Inter', sans-serif; 
+        }
+        .vibrant-card { 
+            background: rgba(10, 15, 30, 0.85); width: 400px; padding: 40px; 
+            border-radius: 40px; border: 2px solid #00d4ff; 
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.2); text-align: center; 
+        }
+        #visualizer { 
+            width: 100%; height: 80px; background: rgba(0,0,0,0.4); 
+            border-radius: 20px; margin-bottom: 25px; border: 1px solid #ff6b9d33;
+        }
+        .btn-action { 
+            padding: 18px 0; border-radius: 20px; font-size: 11px; font-weight: 800; 
+            width: 48%; transition: 0.3s; cursor: pointer;
+        }
+        .btn-record { background: #1a0b16; border: 1px solid #ff6b9d; color: #ff6b9d; }
+        .btn-record.active { background: #ff6b9d; color: white; box-shadow: 0 0 20px #ff6b9d; }
+        .btn-upload { background: #071529; border: 1px solid #00d4ff; color: #00d4ff; position: relative; }
+        .btn-scan { 
+            width: 100%; background: linear-gradient(90deg, #00d4ff, #0072ff); 
+            padding: 20px; border-radius: 50px; font-weight: 900; color: white; 
+            margin-top: 30px; box-shadow: 0 10px 20px rgba(0, 114, 255, 0.4);
+        }
+        #results { 
+            margin-top: 25px; border-left: 4px solid #00d4ff; background: rgba(0,0,0,0.5); 
+            padding: 20px; border-radius: 15px; text-align: left; display: none; 
+        }
+    </style>
+</head>
+<body>
+    <div class="vibrant-card">
+        <h1 class="text-3xl font-black italic tracking-tighter uppercase mb-0">AI-VOICE<span class="text-cyan-400">REG</span></h1>
+        <p class="text-[10px] tracking-[4px] text-pink-500 font-bold mb-6 uppercase">Crafted by UpsideX</p>
+        
+        <canvas id="visualizer"></canvas>
+
+        <select id="language" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl text-sm font-bold text-cyan-100 outline-none mb-6">
+            <option value="Tamil">Tamil</option><option value="English">English</option>
+            <option value="Hindi">Hindi</option><option value="Malayalam">Malayalam</option><option value="Telugu">Telugu</option>
+        </select>
+
+        <div class="flex justify-between">
+            <button class="btn-action btn-record" id="recordBtn">● <span id="recText">RECORD</span></button>
+            <button class="btn-action btn-upload">+ UPLOAD<input type="file" id="fileInput" class="absolute inset-0 opacity-0 cursor-pointer" onchange="handleFile(event)"></button>
+        </div>
+
+        <button class="btn-scan" onclick="initiateScan()">INITIATE SCAN</button>
+
+        <div id="results">
+            <p id="r_class" class="font-bold text-cyan-400 text-xl uppercase tracking-wide">--</p>
+            <p id="r_score" class="text-white font-mono text-lg my-2">--</p>
+            <p id="r_exp" class="text-xs italic text-gray-200 leading-relaxed">--</p>
+        </div>
+    </div>
+
+    <script>
+        let capturedBase64 = null, mediaRecorder = null, chunks = [], audioCtx, analyser, dataArray, canvas = document.getElementById("visualizer"), ctx = canvas.getContext("2d");
+        
+        // Transverse Visualizer Logic
+        function animateBars(active = false) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let bars = 40; let barWidth = (canvas.width / bars);
+            for (let i = 0; i < bars; i++) {
+                let barHeight = active ? (dataArray[i] / 2.2) : (5 + Math.random() * 5);
+                let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                grad.addColorStop(0, "#00d4ff"); grad.addColorStop(1, "#ff6b9d");
+                ctx.fillStyle = grad;
+                ctx.fillRect(i * barWidth, (canvas.height - barHeight) / 2, barWidth - 2, barHeight);
+            }
+            if (active) analyser.getByteFrequencyData(dataArray);
+            animationId = requestAnimationFrame(() => animateBars(active));
+        } animateBars(false);
+
+        // Recording Logic
+        document.getElementById('recordBtn').onclick = async () => {
+            const btn = document.getElementById('recordBtn');
+            const recText = document.getElementById('recText');
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioCtx = new AudioContext(); analyser = audioCtx.createAnalyser();
+                audioCtx.createMediaStreamSource(stream).connect(analyser);
+                analyser.fftSize = 128; dataArray = new Uint8Array(analyser.frequencyBinCount);
+                animateBars(true);
+                mediaRecorder = new MediaRecorder(stream); chunks = [];
+                mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'audio/mp3' });
+                    const reader = new FileReader();
+                    reader.onloadend = () => { capturedBase64 = reader.result.split(',')[1]; recText.innerText = "DONE ✓"; };
+                    reader.readAsDataURL(blob);
+                };
+                mediaRecorder.start(); btn.classList.add('active'); recText.innerText = "STOP";
+            } else { mediaRecorder.stop(); btn.classList.remove('active'); }
+        };
+
+        function handleFile(e) {
+            const reader = new FileReader();
+            reader.onload = () => { capturedBase64 = reader.result.split(',')[1]; document.getElementById('recText').innerText = "LOADED ✓"; };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
+        // Functional Initiate Scan
+        async function initiateScan() {
+            if (!capturedBase64) return alert("Record audio first!");
+            const btn = document.querySelector('.btn-scan');
+            btn.disabled = true; btn.innerText = "ANALYZING...";
+            try {
+                const res = await fetch('http://127.0.0.1:8001/api/voice-detection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': 'sk_test_123456789' },
+                    body: JSON.stringify({ 
+                        language: document.getElementById('language').value, 
+                        audioFormat: 'mp3', 
+                        audioBase64: capturedBase64 
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    document.getElementById('results').style.display = "block";
+                    document.getElementById('r_class').innerText = data.classification.replace('_', ' ');
+                    document.getElementById('r_score').innerText = "Confidence: " + data.confidenceScore.toFixed(2);
+                    document.getElementById('r_exp').innerText = data.explanation;
+                } else { alert("Error: " + data.message); }
+            } catch (err) { alert("Server Error. Ensure server.py is running on Port 8001."); } 
+            finally { btn.disabled = false; btn.innerText = "INITIATE SCAN"; }
+        }
+    </script>
+</body>
+</html>
