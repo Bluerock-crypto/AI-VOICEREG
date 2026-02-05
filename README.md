@@ -22,7 +22,7 @@ The core engine uses **Google Gemini Flash latest **, leveraging its multimodal 
 
 ## 🛠️ Tech Stack
 * **Backend:** Python, FastAPI, Uvicorn
-* **AI Model:** Google Gemini 1.5 Flash (via `google-generativeai`)
+* **AI Model:** Google Gemini 2.5 Flash (via `google-generativeai`)
 * **Frontend:** HTML5, CSS3 (Neon UI), JavaScript (MediaRecorder API)
 * **Deployment:** Render (Cloud Hosting)
 
