@@ -13,7 +13,7 @@ load_dotenv()
 
 # --- CONFIGURATION ---
 VALID_API_KEY = "sk_test_123456789"
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key=os.getenv("gemini-api-key"))
 model = genai.GenerativeModel('gemini-flash-latest')
 
 app = FastAPI()
@@ -72,4 +72,5 @@ async def voice_detection(request: VoiceRequest, x_api_key: str = Header(None)):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=10000)
+
 
